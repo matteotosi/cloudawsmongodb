@@ -1,0 +1,69 @@
+PERCENTUALE CASI IN BASE AL TIPO:
+var n = db.cases.find({}).count();
+var types = db.cases.distinct("ServiceName");
+for (i=0; i<types.length; i++){
+var tc = db.cases.find({ServiceName : types[i]}).count();
+print("Total cases of " + types[i] + ": " + (tc/n)*100 + "%");
+}
+
+PERCENTUALE CASI RISOLTI:
+var closed = db.cases.find({CaseCurrentStatus:"closed"}).count();
+print("Total number of cases closed: " + closed);
+
+PERCENTUALE CASI APERTI:
+var open = db.cases.find({CaseCurrentStatus:"open"}).count();
+print("Total number of cases open: " + open);
+
+PERCENTUALE CASI PENDING:
+var pending = db.cases.find({CaseCurrentStatus:"pending"}).count();
+print("Total number of cases pending: " + pending);
+
+PERCENTUALE CASI RISOLTI IN BASE AL TIPO:
+for (i=0; i<types.length; i++){
+var ctc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"closed"}).count();
+print("Total cases of " + types[i] + " that have been closed: " + (ctc/closed)*100 + "%");
+}
+
+PERCENTUALE CASI APERTI IN BASE AL TIPO:
+for (i=0; i<types.length; i++){
+var otc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"open"}).count();
+print("Total cases of " + types[i] + " that are open: " + (otc/open)*100 + "%");
+}
+
+PERCENTUALE CASI PENDING IN BASE AL TIPO:
+for (i=0; i<types.length; i++){
+var ptc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"pending"}).count();
+print("Total cases of " + types[i] + " that are pending: " + (ptc/pending)*100 + "%");
+}
+
+
+var SOURCE = db.cases;
+var DEST = db.distinct
+DEST.drop();
+
+
+map = function() {
+  emit( this.CaseAddressString , {count: 1});
+}
+
+reduce = function(key, values) {
+  var count = 0;
+
+  values.forEach(function(v) {
+    count += v['count'];        // count each distinct value for lagniappe
+  });
+
+  return {count: count};
+};
+
+//
+// run map/reduce
+//
+res = SOURCE.mapReduce( map, reduce, 
+    { out: 'distinct', 
+     verbose: true
+    }
+    );
+
+print( "distinct count= " + res.counts.output );
+print( "distinct count=", DEST.count() );
