@@ -1,4 +1,5 @@
 PERCENTUALE CASI IN BASE AL TIPO:
+
 var n = db.cases.find({}).count();
 var types = db.cases.distinct("ServiceName");
 for (i=0; i<types.length; i++){
@@ -6,36 +7,61 @@ var tc = db.cases.find({ServiceName : types[i]}).count();
 print("Total cases of " + types[i] + ": " + (tc/n)*100 + "%");
 }
 
+******************************************************************************************
+
 PERCENTUALE CASI RISOLTI:
+
 var closed = db.cases.find({CaseCurrentStatus:"closed"}).count();
 print("Total number of cases closed: " + closed);
 
+******************************************************************************************
+
 PERCENTUALE CASI APERTI:
+
 var open = db.cases.find({CaseCurrentStatus:"open"}).count();
 print("Total number of cases open: " + open);
 
+******************************************************************************************
+
 PERCENTUALE CASI PENDING:
+
 var pending = db.cases.find({CaseCurrentStatus:"pending"}).count();
 print("Total number of cases pending: " + pending);
 
+******************************************************************************************
+
 PERCENTUALE CASI RISOLTI IN BASE AL TIPO:
+
 for (i=0; i<types.length; i++){
 var ctc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"closed"}).count();
 print("Total cases of " + types[i] + " that have been closed: " + (ctc/closed)*100 + "%");
 }
 
+******************************************************************************************
+
 PERCENTUALE CASI APERTI IN BASE AL TIPO:
+
 for (i=0; i<types.length; i++){
 var otc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"open"}).count();
 print("Total cases of " + types[i] + " that are open: " + (otc/open)*100 + "%");
 }
 
+******************************************************************************************
+
 PERCENTUALE CASI PENDING IN BASE AL TIPO:
+
 for (i=0; i<types.length; i++){
 var ptc = db.cases.find({ServiceName : types[i] , CaseCurrentStatus:"pending"}).count();
 print("Total cases of " + types[i] + " that are pending: " + (ptc/pending)*100 + "%");
 }
 
+******************************************************************************************
+
+//MAP REDUCE:
+
+******************************************************************************************
+
+1) NUMBER OF CASES PER DAY
 
 var SOURCE = db.cases;
 var DEST = db.distinct;
@@ -65,9 +91,53 @@ reduce = function(key, values) {
 // run map/reduce
 //
 res = SOURCE.mapReduce( map, reduce, 
-    { out: 'distinct', 
-     verbose: true
+    { 
+    out: 'distinct',
+    query: {CaseCurrentStatus:"open"},
+    verbose: true
     }
     );
 
 db.distinct.find({});
+
+******************************************************************************************
+
+2) FOR EACH CITY, GET THE NUMBER OF OPEN,CLOSED,PENDING CASES
+
+var SOURCE = db.cases;
+var DEST = db.distinct;
+DEST.drop();
+
+map = function() {
+	
+	var key = this.CaseAddressString[0].city;
+    var value = { status : this.CaseCurrentStatus };
+   	emit(key, value);
+}
+
+reduce = function(key, values) {
+
+  	reducedVal = { OpenCases: 0 , ClosedCases: 0, PendingCases: 0, Undefined: 0, Total: 0};
+    
+    for (var idx = 0; idx < values.length; idx++) {
+    	if(values[idx].status == "open") reducedVal.OpenCases += 1;
+		else if(values[idx].status == "closed") reducedVal.ClosedCases += 1;
+		else if(values[idx].status == "pending") reducedVal.PendingCases += 1;
+		else reducedVal.Undefined += 1;
+		reducedVal.Total +=1;
+    }
+
+    return reducedVal;
+};
+                    
+//
+// run map/reduce
+//
+res = SOURCE.mapReduce( map, reduce, 
+    { 
+    out: 'distinct',
+    verbose: true
+    }
+    );
+
+db.distinct.find({}).sort( { "value.Total": -1 } );
