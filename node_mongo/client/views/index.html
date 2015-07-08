@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html ng-app="mongoApp">
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title></title>
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+  <h1>COLD CASES</h1>
+  <!-- Stores View -->
+  <div ng-controller="casesController">
+      <form ng-submit="searchCases()">
+          <label for="serviceName">Service Name:</label>
+          <select ng-init="serviceName = snames[0]" ng-model="serviceName" id="serviceName" ng-options="sn for sn in snames">
+          </select>
+          <label for="city">Near:</label>
+          <select ng-init="city = cities[0]" ng-model="city" id="city" ng-options="c for c in cities">
+          </select>
+          <label for="stat">Status:</label>
+          <select ng-init="stat = stats[0]" ng-model="stat" id="stat" ng-options="s for s in stats">
+          </select>
+          <button type="submit">Search Cases</button>
+      </form>
+      <h1>{{casesresp}}</h1>
+      <ul>
+          <li ng-repeat="case in cases">
+             Requestor: <b> {{case.RequestorFirstName}} {{case.RequestorLastName}} </b>, Service Name: <b>{{case.ServiceName}}</b>, City: <b>{{case.CaseAddressString[0].city}}</b>, Status: <b>{{case.CaseCurrentStatus}}</b>,
+          </li>
+      </ul>
+  </div>
+
+      <script type="text/javascript" src="/js/lib/jquery/jquery-1.11.3.min.js"></script>
+      <script type="text/javascript" src="/js/lib/angular/angular.min.js"></script>
+      <script type="text/javascript" src="/js/lib/angular-resource/angular-resource.min.js"></script>
+      <script type="text/javascript" src="/js/lib/angular-route/angular-route.min.js"></script>
+      <script type="text/javascript" src="/js/app.js"></script>
+      <script type="text/javascript" src="/js/controllers/cases-controller.js"></script>
+  </body>
+</html>
+
+<!-- https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js -->
